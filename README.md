@@ -1,94 +1,89 @@
-# Filesystem Visualizer
+Filesystem Visualizer
 
-Un manager de fișiere minimalist în consolă pentru sisteme de operare de tip Unix/Linux, dezvoltat în C utilizând biblioteca **ncurses** și apeluri de sistem **POSIX**. 
+Descriere Proiect
 
-Proiectul este o aplicație TUI (*Text User Interface*) inspirată din utilitare precum *Midnight Commander*, oferind o interfață interactivă pentru navigarea și gestionarea fișierelor.
+Aplicație de tip TUI (Text User Interface) dezvoltată în limbajul C pentru sisteme de operare Unix/Linux, creată ca proiect la disciplina Sisteme de Operare.
 
----
+Proiectul oferă un manager de fișiere minimalist în consolă (inspirat de utilitarul Midnight Commander, dar simplificat la un singur panou de vizualizare). Aplicația permite explorarea interactivă a directoarelor și executarea operațiunilor de bază asupra fișierelor: copiere, mutare și ștergere.
 
-## 🏗️ Arhitectura Proiectului
+Rezumatul Etapelor de Implementare
 
-Aplicația este structurată pe **4 module principale**:
+Configurarea mediului și inițializarea interfeței ncurses
 
-```
-+-------------------------------------------------------+
-|                    BUCLA PRINCIPALĂ                   |
-|           (Preluare taste & dispatcher)               |
-+---------------------------+---------------------------+
-                            |
-         +------------------+------------------+
-         |                                     |
-         v                                     v
-+-----------------------+           +-----------------------+
-|  1. Modul UI          |           |  2. Modul Filesystem  |
-|  (ncurses)            |           |  (POSIX Engine)       |
-| - Randare fereastră   |           | - Citire directoare   |
-| - Evidențiere cursor  |           | - Preluare metadate   |
-+-----------------------+           +-----------------------+
-                                               |
-                                               v
-                                    +-----------------------+
-                                    |  3. Modul Operații    |
-                                    | - Copiere (open/read) |
-                                    | - Mutare (rename)     |
-                                    | - Ștergere (unlink)   |
-                                    +-----------------------+
-```
+Scanarea și citirea structurii sistemului de fișiere (POSIX Engine)
 
----
+Randarea componentei vizuale și gestionarea navigării (UI & Events)
 
-## 🧩 Descrierea Modulelor
+Implementarea operațiunilor de bază pe fișiere (Copiere, Mutare, Ștergere)
 
-### 1. Structura de Date (Model)
-Păstrează informațiile despre conținutul directorului curent în memorie:
-* Tablou de structuri `FileItem` (nume, dimensiune, tip: fișier/director).
-* Indexul elementului selectat curent (`selected_index`).
+Tratarea erorilor, curățarea resurselor și testarea pe Linux
 
-### 2. Modulul Filesystem (`opendir`, `readdir`, `stat`)
-* Parcurge directorul curent și populează lista de fișiere.
-* Extrage dimensiunea și tipul fiecărui fișier folosind apelul `stat()`.
+Detalierea Etapelor de Implementare
 
-### 3. Interfața Grafică (`ncurses`)
-* Desenează cadrul ferestrei și calea directorului curent.
-* Afișează lista de fișiere și evidențiază linia pe care se află cursorul.
-* Afișează bara de instrucțiuni/comenzi în partea de jos a ecranului.
+Etapa 1: Setup Proiect & Inițializare Interfață Terminal
 
-### 4. Modulul de Operații (Sistem de fișiere)
-* **Copiere**: Citire și scriere în bucăți (buffers) folosind `open()`, `read()`, `write()`.
-* **Mutare**: Redenumirea sau mutarea căii folosind `rename()`.
-* **Ștergere**: Eliminarea fișierelor/directoarelor goale folosind `unlink()` sau `remove()`.
+În ce constă task-ul: Pregătirea mediului de dezvoltare, structurarea proiectului și configurarea stării inițiale a terminalului pentru modul grafic în consolă.
 
----
+Cum plănuiesc să îl realizez: Voi crea o aplicație C de bază care preia controlul ecranului de terminal, dezactivează afișarea automată a tastelor apăsate (echo) și activează citirea tastelor speciale (săgețile direcționale). La finalul execuției, terminalul va fi restaurat la starea inițială.
 
-## 🔄 Fluxul de Execuție
+Instrumente și funcții utilizate:
 
-1. **Inițializare**: Configurare `ncurses` (`initscr()`, `noecho()`, `cbreak()`, `keypad()`).
-2. **Încărcare**: Citirea conținutului din directorul curent.
-3. **Buclă de Evenimente (`Event Loop`)**:
-   * Desenează ecranul (`draw_ui()`).
-   * Așteaptă o tastă de la utilizator (`getch()`):
-     * **Săgeți Sus / Jos**: Schimbă fișierul selectat.
-     * **Enter**: Deschide un director selectat.
-     * **Tasta C**: Inițiază copierea fișierului selectat.
-     * **Tasta M**: Inițiază mutarea fișierului selectat.
-     * **Tasta D**: Șterge fișierul selectat.
-     * **Tasta Q**: Închide aplicația.
-4. **Finalizare**: Eliberare resurse și restaurare terminal (`endwin()`).
+Compilator C (gcc / clang).
 
----
+Biblioteca ncurses: initscr(), noecho(), cbreak(), keypad(), endwin().
 
-## 🛠️ Compilare și Rulare
+Etapa 2: Citirea și Preluarea Metadatelor Fișierelor
 
-### Cerințe
-* Compilator C (`gcc` sau `clang`)
-* Biblioteca `ncurses` (preinstalată pe macOS/Linux)
+În ce constă task-ul: Inspectarea directorului curent din sistemul de fișiere, parcurgerea elementelor și memorarea informațiilor despre fișiere și directoare.
 
-### Compilare
-```bash
-gcc -Wall main.c -o visualizer -lncurses
-```
+Cum plănuiesc să îl realizez: Voi defini o structură C (FileItem) pentru a stoca numele, dimensiunea și tipul fiecărui element (fișier obișnuit vs. director). Voi parcurge conținutul directorului curent și voi popula un tablou dynamic sau static cu aceste structuri.
 
-### Rulare
-```bash
-./visualizer
-```
+Instrumente și funcții utilizate:
+
+Inspecție directoare (<dirent.h>): opendir(), readdir(), closedir().
+
+Metadate fișiere (<sys/stat.h>): stat() sau lstat(), macro-ul S_ISDIR pentru detectarea directoarelor.
+
+Etapa 3: Interfața Grafică și Navigarea Interactivă
+
+În ce constă task-ul: Desenarea meciului/listei pe ecran, adăugarea unui cursor vizual și gestionarea navigării din tastatură.
+
+Cum plănuiesc să îl realizez: Voi crea o funcție de randare draw_ui() care curăță ecranul, afișează calea directorului curent în partea de sus și listează fișierele linie cu linie. Elementul aflat la poziția cursorului va fi evidențiat prin culori inversate. Într-o buclă principală de evenimente, voi asculta tastele introduse: Săgeți Sus/Jos pentru deplasarea cursorului și Enter pentru intrarea într-un subdirector sau schimbarea directorului.
+
+Instrumente și funcții utilizate:
+
+Afișare ncurses: printw(), mvprintw(), attron(A_REVERSE), attroff(), getch(), clear(), refresh().
+
+Schimbare director POSIX (<unistd.h>): chdir().
+
+Etapa 4: Implementarea Operațiilor pe Fișiere
+
+În ce constă task-ul: Implementarea funcționalităților de manipulare a fișierului selectat (ștergere, mutare, copiere) apelabile prin comenzi rapide de la tastatură.
+
+Cum plănuiesc să îl realizez:
+
+Ștergere (Tasta D): Preluarea numelui fișierului selectat și eliminarea lui de pe disc, urmată de reîmprospătarea listei.
+
+Mutare / Redenumire (Tasta M): Citirea noii destinații printr-un mic prompt în interfață și mutarea fișierului.
+
+Copiere (Tasta C): Citirea fișierului sursă în bucăți de memorie (buffer) și scrierea lor într-un fișier nou creat la destinație.
+
+Instrumente și funcții utilizate:
+
+Ștergere: unlink() pentru fișiere, rmdir() / remove().
+
+Mutare: rename().
+
+Copiere: open(), read(), write(), close() din <fcntl.h> și <unistd.h>.
+
+Etapa 5: Tratarea Erorilor, Validare & Portabilitate
+
+În ce constă task-ul: Prevenirea erorilor de rulare (ex. lipsă permisiuni), gestionarea cazurilor limită și asigurarea compatibilității complete pe Linux.
+
+Cum plănuiesc să îl realizez: Voi adăuga verificări pentru toate apelurile de sistem (ex: verificare dacă opendir() a reușit) și voi afișa un mesaj de eroare în interfață dacă o operație e eșuată. Înainte de predare, voi efectua o compilare și testare pe un mediu Linux (Ubuntu/Debian).
+
+Instrumente și funcții utilizate:
+
+Verificare coduri de retur și errno.
+
+Flag-uri de compilare strictă: gcc -Wall -Wextra.
